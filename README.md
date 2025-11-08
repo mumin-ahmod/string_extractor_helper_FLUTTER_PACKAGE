@@ -285,10 +285,31 @@ For more details, read [this article](https://mumin-ahmod.medium.com/flutter-str
 - **Use meaningful string content** for better key generation
 - **Keep backups** when using the replacement feature
 
-## Contributing
+## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! We appreciate your help in improving this package.
 
+### How to Contribute
+1. Fork the repository
+2. Create a feature branch from the development branch
+3. Make your changes
+4. Submit a Pull Request
+
+### Development Branch
+The current development branch is: [`dev-updated`](https://github.com/mumin-ahmod/string_extractor_helper_FLUTTER_PACKAGE/tree/dev-updated)
+
+Please make sure to base your work on this branch.
+
+## 🙏 Contributors
+
+Special thanks to these amazing contributors who have helped improve this package:
+
+- **Creator**: [mumin-ahmod](https://github.com/mumin-ahmod)
+- [Keatr0n](https://github.com/Keatr0n)
+
+---
+
+*Want to see your name here? Feel free to contribute!*
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
