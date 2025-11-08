@@ -61,13 +61,13 @@ dart pub run string_extractor_intl:extract_strings
 **Extract and replace in files:**
 
 ```bash
-dart pub run string_extractor_intl:extract_strings --replace
+dart run string_extractor_intl:extract_strings --replace
 ```
 
 **Custom configuration:**
 
 ```bash
-dart pub run string_extractor_intl:extract_strings \
+dart run string_extractor_intl:extract_strings \
   --input lib/presentation \
   --output assets/l10n \
   --template-arb strings_en.arb \
@@ -78,7 +78,7 @@ dart pub run string_extractor_intl:extract_strings \
 **Show help:**
 
 ```bash
-dart pub run string_extractor_intl:extract_strings --help
+dart run string_extractor_intl:extract_strings --help
 ```
 
 ### Command Line Options

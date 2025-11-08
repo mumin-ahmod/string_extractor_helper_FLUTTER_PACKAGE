@@ -301,7 +301,7 @@ class LocalizationStringExtractor {
 
   bool _isImportExportStatement(String content, int position) {
     int lineStart = content.lastIndexOf('\n', position - 1) + 1;
-    String linePrefix = content.substring(lineStart, position).trim();
+    String linePrefix = content.substring(lineStart, position);
 
     return linePrefix.startsWith('import ') ||
         linePrefix.startsWith('export ') ||
@@ -317,15 +317,16 @@ class LocalizationStringExtractor {
 
     final ignoredPatterns = [
       'assets/', 'fonts/', 'images/', '.png', '.jpg', '.jpeg', '.svg', '.json', '.dart',
-      'MaterialApp', 'StatelessWidget', 'StatefulWidget', 'key:', 'const ', 'super.key',
-      'DateTime.now()', 'Colors.', 'EdgeInsets.', 'BorderRadius.', 'BoxShadow(', 'FontWeight.',
-      'TextStyle(', 'IconData(', 'Alignment.', 'MainAxisAlignment.', 'CrossAxisAlignment.',
-      'TextDirection.', 'FlexFit.', 'Clip.', 'BlendMode.', 'BoxFit.', 'FilterQuality.',
-      'ImageRepeat.', 'Locale(', 'TargetPlatform.', 'Brightness.', 'ThemeMode.', 'FloatingActionButtonLocation.',
-      'TextCapitalization.', 'TextInputAction.', 'TextInputType.', 'Overflow.', 'StackFit.',
-      'WrapAlignment.', 'WrapCrossAlignment.', 'VerticalDirection.', 'Axis.', 'BoxShape.',
-      'BoxBorder.', 'BorderStyle.', 'TableBorder.', 'TableCellVerticalAlignment.', 'TableRowInkDecoration.',
-      'HitTestBehavior.', 'MaterialType.', 'MaterialTapTargetSize.', 'SnackBarBehavior.', 'SnackBarClosedReason.',
+      '.com', '.org', '.net', '.io', '.app', 'www.', 'Key(', 'MaterialApp', 'StatelessWidget',
+      'StatefulWidget', 'key:', 'const ', 'super.key', 'DateTime.now()', 'Colors.', 'EdgeInsets.',
+      'BorderRadius.', 'BoxShadow(', 'FontWeight.', 'TextStyle(', 'IconData(', 'Alignment.',
+      'MainAxisAlignment.', 'CrossAxisAlignment.', 'TextDirection.', 'FlexFit.', 'Clip.', 'BlendMode.',
+      'BoxFit.', 'FilterQuality.', 'ImageRepeat.', 'Locale(', 'TargetPlatform.', 'Brightness.',
+      'ThemeMode.', 'FloatingActionButtonLocation.', 'TextCapitalization.', 'TextInputAction.',
+      'TextInputType.', 'Overflow.', 'StackFit.', 'WrapAlignment.', 'WrapCrossAlignment.',
+      'VerticalDirection.', 'Axis.', 'BoxShape.', 'BoxBorder.', 'BorderStyle.', 'TableBorder.',
+      'TableCellVerticalAlignment.', 'TableRowInkDecoration.', 'HitTestBehavior.', 'MaterialType.',
+      'MaterialTapTargetSize.', 'SnackBarBehavior.', 'SnackBarClosedReason.',
       'TooltipTriggerMode.', 'AdaptiveTextSelectionToolbar.buttonItems','print('
     ];
 
