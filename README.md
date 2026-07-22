@@ -78,7 +78,7 @@ dart pub run string_extractor_intl:extract_strings \
 **Show help:**
 
 ```bash
-dart pub run string_extractor_intl:extract_strings --help
+dart run string_extractor_intl:extract_strings --help
 ```
 
 ### Command Line Options
