@@ -18,7 +18,8 @@ class LocalizationStringExtractor {
     required String inputDirectory,
     required String outputDirectory,
     required String templateArbFile,
-    required String className, // This will now be used to configure the output class in l10n.yaml
+    required String
+    className, // This will now be used to configure the output class in l10n.yaml
     bool replaceInFiles = false,
     bool checkDependencies = true,
   }) async {
@@ -43,10 +44,15 @@ class LocalizationStringExtractor {
 
     print('📝 Found ${_extractedStrings.length} unique localizable strings');
     await _generateArbFile(outputDirectory, templateArbFile);
-    await _generateL10nYaml(outputDirectory, className); // Use the provided className here
+    await _generateL10nYaml(
+      outputDirectory,
+      className,
+    ); // Use the provided className here
 
     if (replaceInFiles) {
-      print('🔄 Updated ${_processedFiles.length} files with localization calls');
+      print(
+        '🔄 Updated ${_processedFiles.length} files with localization calls',
+      );
 
       // Automatically run flutter gen-l10n after replacement
       print('🏗️  Running flutter gen-l10n...');
@@ -57,7 +63,9 @@ class LocalizationStringExtractor {
   Future<void> _checkDependencies() async {
     final pubspecFile = File('pubspec.yaml');
     if (!pubspecFile.existsSync()) {
-      throw Exception('pubspec.yaml not found. Make sure you\'re in a Flutter project root.');
+      throw Exception(
+        'pubspec.yaml not found. Make sure you\'re in a Flutter project root.',
+      );
     }
 
     final pubspecContent = await pubspecFile.readAsString();
@@ -70,7 +78,9 @@ class LocalizationStringExtractor {
 
     if (dependencies != null) {
       hasIntl = dependencies.containsKey('intl');
-      hasFlutterLocalizations = dependencies.containsKey('flutter_localizations');
+      hasFlutterLocalizations = dependencies.containsKey(
+        'flutter_localizations',
+      );
     }
 
     final List<String> missingDeps = [];
@@ -95,7 +105,11 @@ class LocalizationStringExtractor {
     }
   }
 
-  Future<void> _scanDirectory(Directory dir, String className, bool replaceInFiles) async {
+  Future<void> _scanDirectory(
+    Directory dir,
+    String className,
+    bool replaceInFiles,
+  ) async {
     await for (final entity in dir.list(recursive: true)) {
       if (entity is File && entity.path.endsWith('.dart')) {
         await _processFile(entity, className, replaceInFiles);
@@ -103,7 +117,11 @@ class LocalizationStringExtractor {
     }
   }
 
-  Future<void> _processFile(File file, String className, bool replaceInFiles) async {
+  Future<void> _processFile(
+    File file,
+    String className,
+    bool replaceInFiles,
+  ) async {
     final content = await file.readAsString();
     final strings = _extractStringsFromContent(content);
 
@@ -136,13 +154,21 @@ class LocalizationStringExtractor {
 
       String replacement;
       if (hasVariables['hasVars']) {
-        final methodCall = _generateMethodCall(className, keyName, hasVariables['variables'], context);
+        final methodCall = _generateMethodCall(
+          className,
+          keyName,
+          hasVariables['variables'],
+          context,
+        );
         replacement = methodCall;
         // Only add to _extractedStrings if it's a new unique key or needs updating with placeholders
-        if (!_extractedStrings.containsKey(keyName) || (_extractedStrings[keyName]?['placeholders'] == null && hasVariables['variables'].isNotEmpty)) {
+        if (!_extractedStrings.containsKey(keyName) ||
+            (_extractedStrings[keyName]?['placeholders'] == null &&
+                hasVariables['variables'].isNotEmpty)) {
           _extractedStrings[keyName] = {
             'value': hasVariables['template'],
-            'description': 'Localized string with parameters: ${hasVariables['variables'].join(', ')}',
+            'description':
+                'Localized string with parameters: ${hasVariables['variables'].join(', ')}',
             'placeholders': _generatePlaceholders(hasVariables['variables']),
           };
         }
@@ -183,7 +209,8 @@ class LocalizationStringExtractor {
     String contextStr = content.substring(start, position);
 
     // Check if we're within a MaterialApp context and specifically in title property
-    if (contextStr.contains('MaterialApp(') || contextStr.contains('CupertinoApp(')) {
+    if (contextStr.contains('MaterialApp(') ||
+        contextStr.contains('CupertinoApp(')) {
       // Look for title: pattern before our string
       final titlePattern = RegExp(r'title\s*:\s*$');
       final lines = contextStr.split('\n');
@@ -197,6 +224,7 @@ class LocalizationStringExtractor {
 
   List<Map<String, String>> _extractStringsFromContent(String content) {
     final List<Map<String, String>> strings = [];
+
     final stringPatterns = [
       RegExp(r'"([^"\\]*(\\.[^"\\]*)*)"'), // Double quotes
       RegExp(r"'([^'\\]*(\\.[^'\\]*)*)'"), // Single quotes
@@ -204,17 +232,28 @@ class LocalizationStringExtractor {
 
     for (final pattern in stringPatterns) {
       final matches = pattern.allMatches(content);
+
       for (final match in matches) {
         final fullMatch = match.group(0)!;
         final innerString = match.group(1)!;
 
-        // Skip if it's likely a import/export statement
-        if (_isImportExportStatement(content, match.start)) continue;
+        // Skip import/export/part URIs.
+        if (_isImportExportStatement(content, match.start)) {
+          continue;
+        }
 
-        // Skip if it's in MaterialApp title (no context available)
-        if (_isInMaterialAppTitle(content, match.start)) continue;
+        // Skip MaterialApp/CupertinoApp title.
+        if (_isInMaterialAppTitle(content, match.start)) {
+          continue;
+        }
 
-        // Get context (Text widget, etc.)
+        // Flutter Key values are programmatic identifiers and should not
+        // be extracted for localization.
+        if (_isFlutterKeyString(content, match.start)) {
+          continue;
+        }
+
+        // Get context (Text widget, etc.).
         final context = _getStringContext(content, match.start);
 
         strings.add({
@@ -243,7 +282,6 @@ class LocalizationStringExtractor {
     if (contextStr.contains('labelText:')) return 'labelText';
     if (contextStr.contains('buttonText:')) return 'buttonText';
 
-
     return 'general';
   }
 
@@ -260,7 +298,9 @@ class LocalizationStringExtractor {
     }
 
     // Check for $ pattern (ensure it's not part of a longer string or a number)
-    final dollarMatches = RegExp(r'(?<![a-zA-Z0-9_])\$([a-zA-Z_][a-zA-Z0-9_]*)\b').allMatches(template);
+    final dollarMatches = RegExp(
+      r'(?<![a-zA-Z0-9_])\$([a-zA-Z_][a-zA-Z0-9_]*)\b',
+    ).allMatches(template);
     for (final match in dollarMatches) {
       final varName = match.group(1)!;
       // Make sure this isn't a false positive for things like "$100"
@@ -277,9 +317,18 @@ class LocalizationStringExtractor {
     };
   }
 
-  String _generateMethodCall(String className, String keyName, List<String> variables, String context) {
+  String _generateMethodCall(
+    String className,
+    String keyName,
+    List<String> variables,
+    String context,
+  ) {
     // Use the class name from the command line argument
-    final params = variables.map((v) => '$v').join(', '); // Removed `as String` as it's not always needed and can cause issues
+    final params = variables
+        .map((v) => '$v')
+        .join(
+          ', ',
+        ); // Removed `as String` as it's not always needed and can cause issues
     return '$className.of(context).$keyName($params)';
   }
 
@@ -288,15 +337,70 @@ class LocalizationStringExtractor {
     return '$className.of(context).$keyName';
   }
 
-  Map<String, Map<String, String>> _generatePlaceholders(List<String> variables) {
+  Map<String, Map<String, String>> _generatePlaceholders(
+    List<String> variables,
+  ) {
     final Map<String, Map<String, String>> placeholders = {};
     for (final variable in variables) {
       placeholders[variable] = {
         'type': 'String',
-        'example': variable == 'username' ? 'John' : variable, // Use variable name as example
+        'example':
+            variable == 'username'
+                ? 'John'
+                : variable, // Use variable name as example
       };
     }
     return placeholders;
+  }
+
+  bool _isFlutterKeyString(String content, int position) {
+    final int lineStart = content.lastIndexOf('\n', position - 1) + 1;
+    final String linePrefix = content.substring(lineStart, position);
+
+    // Direct positional string arguments:
+    //
+    // Key('...')
+    // ValueKey('...')
+    // ValueKey<String>('...')
+    // PageStorageKey('...')
+    // ObjectKey('...')
+    // GlobalObjectKey('...')
+    //
+    // Only match when the constructor call occurs immediately before
+    // the string literal on the same line.
+    final directKeyPattern = RegExp(
+      r'(?:'
+      r'Key|'
+      r'ValueKey|'
+      r'PageStorageKey|'
+      r'ObjectKey|'
+      r'GlobalObjectKey'
+      r')'
+      r'(?:\s*<[^>]+>)?'
+      r'\s*\(\s*$',
+    );
+
+    if (directKeyPattern.hasMatch(linePrefix)) {
+      return true;
+    }
+
+    // GlobalKey(debugLabel: '...')
+    //
+    // debugLabel may be on its own line, so check whether the text
+    // immediately preceding the string is the debugLabel parameter.
+    final int contextStart = math.max(0, position - 100);
+    final String precedingContent = content.substring(contextStart, position);
+
+    final debugLabelPattern = RegExp(r'debugLabel\s*:\s*$', multiLine: true);
+
+    if (!debugLabelPattern.hasMatch(precedingContent)) {
+      return false;
+    }
+
+    // Make sure this debugLabel belongs to a GlobalKey constructor.
+    final int globalKeyPosition = precedingContent.lastIndexOf('GlobalKey');
+
+    return globalKeyPosition != -1;
   }
 
   bool _isImportExportStatement(String content, int position) {
@@ -312,39 +416,97 @@ class LocalizationStringExtractor {
     if (str.length <= 1) return true;
     if (RegExp(r'^\d+\.?\d*$').hasMatch(str)) return true; // Pure numbers
     if (RegExp(r'^[a-zA-Z]$').hasMatch(str)) return true; // Single letters
-    if (str.startsWith('http://') || str.startsWith('https://')) return true; // URLs
-    if (str.contains('/') && str.split('/').length > 2 && !str.contains(' ')) return true; // File paths like "path/to/file.ext"
+    if (str.startsWith('http://') || str.startsWith('https://'))
+      return true; // URLs
+    if (str.contains('/') && str.split('/').length > 2 && !str.contains(' '))
+      return true; // File paths like "path/to/file.ext"
 
     final ignoredPatterns = [
-      'assets/', 'fonts/', 'images/', '.png', '.jpg', '.jpeg', '.svg', '.json', '.dart',
-      'MaterialApp', 'StatelessWidget', 'StatefulWidget', 'key:', 'const ', 'super.key',
-      'DateTime.now()', 'Colors.', 'EdgeInsets.', 'BorderRadius.', 'BoxShadow(', 'FontWeight.',
-      'TextStyle(', 'IconData(', 'Alignment.', 'MainAxisAlignment.', 'CrossAxisAlignment.',
-      'TextDirection.', 'FlexFit.', 'Clip.', 'BlendMode.', 'BoxFit.', 'FilterQuality.',
-      'ImageRepeat.', 'Locale(', 'TargetPlatform.', 'Brightness.', 'ThemeMode.', 'FloatingActionButtonLocation.',
-      'TextCapitalization.', 'TextInputAction.', 'TextInputType.', 'Overflow.', 'StackFit.',
-      'WrapAlignment.', 'WrapCrossAlignment.', 'VerticalDirection.', 'Axis.', 'BoxShape.',
-      'BoxBorder.', 'BorderStyle.', 'TableBorder.', 'TableCellVerticalAlignment.', 'TableRowInkDecoration.',
-      'HitTestBehavior.', 'MaterialType.', 'MaterialTapTargetSize.', 'SnackBarBehavior.', 'SnackBarClosedReason.',
-      'TooltipTriggerMode.', 'AdaptiveTextSelectionToolbar.buttonItems','print('
+      'assets/',
+      'fonts/',
+      'images/',
+      '.png',
+      '.jpg',
+      '.jpeg',
+      '.svg',
+      '.json',
+      '.dart',
+      'MaterialApp',
+      'StatelessWidget',
+      'StatefulWidget',
+      'key:',
+      'const ',
+      'super.key',
+      'DateTime.now()',
+      'Colors.',
+      'EdgeInsets.',
+      'BorderRadius.',
+      'BoxShadow(',
+      'FontWeight.',
+      'TextStyle(',
+      'IconData(',
+      'Alignment.',
+      'MainAxisAlignment.',
+      'CrossAxisAlignment.',
+      'TextDirection.',
+      'FlexFit.',
+      'Clip.',
+      'BlendMode.',
+      'BoxFit.',
+      'FilterQuality.',
+      'ImageRepeat.',
+      'Locale(',
+      'TargetPlatform.',
+      'Brightness.',
+      'ThemeMode.',
+      'FloatingActionButtonLocation.',
+      'TextCapitalization.',
+      'TextInputAction.',
+      'TextInputType.',
+      'Overflow.',
+      'StackFit.',
+      'WrapAlignment.',
+      'WrapCrossAlignment.',
+      'VerticalDirection.',
+      'Axis.',
+      'BoxShape.',
+      'BoxBorder.',
+      'BorderStyle.',
+      'TableBorder.',
+      'TableCellVerticalAlignment.',
+      'TableRowInkDecoration.',
+      'HitTestBehavior.',
+      'MaterialType.',
+      'MaterialTapTargetSize.',
+      'SnackBarBehavior.',
+      'SnackBarClosedReason.',
+      'TooltipTriggerMode.',
+      'AdaptiveTextSelectionToolbar.buttonItems',
+      'print(',
     ];
 
     return ignoredPatterns.any((pattern) => str.contains(pattern));
   }
 
-
   String _generateKeyName(String str) {
     // Basic cleaning: remove non-alphanumeric, replace spaces with single underscore
     String cleaned = str
-        .replaceAll(RegExp(r'[^a-zA-Z0-9\s]'), ' ') // Replace non-alphanumeric (except spaces) with space
+        .replaceAll(
+          RegExp(r'[^a-zA-Z0-9\s]'),
+          ' ',
+        ) // Replace non-alphanumeric (except spaces) with space
         .trim() // Trim leading/trailing spaces
-        .replaceAll(RegExp(r'\s+'), '_'); // Replace multiple spaces with single underscore
+        .replaceAll(
+          RegExp(r'\s+'),
+          '_',
+        ); // Replace multiple spaces with single underscore
 
     // Convert to camelCase
     List<String> parts = cleaned.split('_');
     String keyName = parts.first.toLowerCase();
     for (int i = 1; i < parts.length; i++) {
-      keyName += parts[i][0].toUpperCase() + parts[i].substring(1).toLowerCase();
+      keyName +=
+          parts[i][0].toUpperCase() + parts[i].substring(1).toLowerCase();
     }
 
     // Handle empty or starting with number
@@ -366,20 +528,21 @@ class LocalizationStringExtractor {
     return finalName;
   }
 
-
   String _addImportIfNeeded(String content, String className) {
     // The import path is 'l10n/generated/app_localizations.dart' by default,
     // where 'app_localizations.dart' is the output-localization-file in l10n.yaml.
     // This file uses the output-class name (e.g., S).
-    final importStatement = "import 'package:${Platform.resolvedExecutable.split('/').last.split('\\').first}_package_name/l10n/generated/app_localizations.dart';";
+    final importStatement =
+        "import 'package:${Platform.resolvedExecutable.split('/').last.split('\\').first}_package_name/l10n/generated/app_localizations.dart';";
     // dynamic package name, assuming this package is named 'string_extractor_intl'
     // If your package has a different name, replace `string_extractor_intl` below
     // or make it configurable if this tool is used within another package.
-    final packageName = 'rental_service'; // Replace with your actual package name
+    final packageName =
+        'rental_service'; // Replace with your actual package name
 
     // Construct the import statement dynamically based on the package name
-    final dynamicImportStatement = "import 'package:$packageName/l10n/generated/app_localizations.dart';";
-
+    final dynamicImportStatement =
+        "import 'package:$packageName/l10n/generated/app_localizations.dart';";
 
     if (content.contains(dynamicImportStatement)) {
       return content;
@@ -414,7 +577,8 @@ class LocalizationStringExtractor {
     }
 
     // Check if localization config already exists
-    if (content.contains('localizationsDelegates:') || content.contains('supportedLocales:')) {
+    if (content.contains('localizationsDelegates:') ||
+        content.contains('supportedLocales:')) {
       return content;
     }
 
@@ -458,11 +622,16 @@ class LocalizationStringExtractor {
       }
     } catch (e) {
       print('❌ Failed to run flutter gen-l10n: $e');
-      print('Please run "flutter gen-l10n" manually after the process completes.');
+      print(
+        'Please run "flutter gen-l10n" manually after the process completes.',
+      );
     }
   }
 
-  Future<void> _generateArbFile(String outputDirectory, String templateArbFile) async {
+  Future<void> _generateArbFile(
+    String outputDirectory,
+    String templateArbFile,
+  ) async {
     final outputDir = Directory(outputDirectory);
     await outputDir.create(recursive: true);
 
@@ -479,9 +648,7 @@ class LocalizationStringExtractor {
       arbData[key] = stringData['value'];
 
       if (stringData['description'] != null) {
-        arbData['@$key'] = {
-          'description': stringData['description'],
-        };
+        arbData['@$key'] = {'description': stringData['description']};
 
         if (stringData['placeholders'] != null) {
           arbData['@$key']['placeholders'] = stringData['placeholders'];
@@ -494,7 +661,10 @@ class LocalizationStringExtractor {
     print('📄 Generated: ${arbFile.path}');
   }
 
-  Future<void> _generateL10nYaml(String outputDirectory, String className) async {
+  Future<void> _generateL10nYaml(
+    String outputDirectory,
+    String className,
+  ) async {
     final l10nFile = File('l10n.yaml');
 
     // Always overwrite l10n.yaml to ensure the correct className is set
